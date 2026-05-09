@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import BuildingMap from "./components/BuildingMap.jsx";
+import SvgBuildingMap from "./components/SvgBuildingMap.jsx";
 import InventoryPanel from "./components/InventoryPanel.jsx";
 import { useLocations } from "./hooks/useLocations.js";
+import { useInventoryStats } from "./hooks/useInventoryStats.js";
 import { isSupabaseConfigured } from "./lib/supabaseClient.js";
 
 export default function App() {
@@ -10,6 +11,8 @@ export default function App() {
     loading: locationsLoading,
     error: locationsError,
   } = useLocations();
+
+  const { statsByLocation } = useInventoryStats();
 
   const [selectedLocationId, setSelectedLocationId] = useState(null);
 
@@ -34,15 +37,18 @@ export default function App() {
       {!isSupabaseConfigured && <SupabaseNotConfiguredBanner />}
       {locationsError && <ErrorBanner error={locationsError} />}
 
-      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6">
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
-          <aside className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-            <BuildingMap
-              locations={activeLocations}
-              loading={locationsLoading}
-              selectedLocationId={selectedLocationId}
-              onSelectLocation={setSelectedLocationId}
-            />
+      <main className="mx-auto w-full max-w-[1600px] flex-1 px-4 py-6">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(440px,520px)_minmax(0,1fr)]">
+          <aside className="overflow-hidden rounded-2xl border border-slate-200 bg-[#f7f5f1] shadow-sm">
+            <div className="p-2">
+              <SvgBuildingMap
+                locations={activeLocations}
+                statsByLocation={statsByLocation}
+                loading={locationsLoading}
+                selectedLocationId={selectedLocationId}
+                onSelectLocation={setSelectedLocationId}
+              />
+            </div>
           </aside>
 
           <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
