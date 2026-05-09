@@ -15,8 +15,12 @@ Run these SQL files in order from the Supabase SQL editor (Project → SQL → N
 
    ```text
    VITE_SUPABASE_URL=https://xxxxxxxxxxxx.supabase.co
-   VITE_SUPABASE_ANON_KEY=eyJhbGciOi...
+   VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_xxxxxxxxxxxx
    ```
+
+   The modern Supabase publishable key (starts with `sb_publishable_`) is
+   preferred. If your project still uses the legacy anon JWT, you can set
+   `VITE_SUPABASE_ANON_KEY` instead — both are supported.
 
 3. Restart `npm run dev`.
 
