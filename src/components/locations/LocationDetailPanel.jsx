@@ -5,7 +5,6 @@ import StatusBadge from "../StatusBadge.jsx";
 import EmptyState from "../EmptyState.jsx";
 import MaterialMovementDrawer from "../inventory/MaterialMovementDrawer.jsx";
 import { useInventory } from "../../hooks/useInventory.js";
-import { useLocations } from "../../hooks/useLocations.js";
 import { displayName } from "../../lib/displayName.js";
 import { getStatus } from "../../lib/inventoryStatus.js";
 
@@ -22,10 +21,15 @@ const TYPE_LABEL = {
 };
 
 // Right-hand panel on desktop; bottom sheet on mobile (parent container
-// chooses where to render this).
-export default function LocationDetailPanel({ location, onClose }) {
+// chooses where to render this). `locations` is passed in by the parent so
+// this component doesn't open its own realtime subscription on the locations
+// table — the parent already has one.
+export default function LocationDetailPanel({
+  location,
+  locations = [],
+  onClose,
+}) {
   const { items, loading, error } = useInventory(location?.id ?? null);
-  const { activeLocations } = useLocations();
 
   const [search, setSearch] = useState("");
   const [drawer, setDrawer] = useState({ mode: null, row: null });
@@ -217,7 +221,7 @@ export default function LocationDetailPanel({ location, onClose }) {
       <MaterialMovementDrawer
         mode={drawer.mode}
         row={drawer.row}
-        locations={activeLocations}
+        locations={locations}
         onClose={() => setDrawer({ mode: null, row: null })}
       />
     </div>

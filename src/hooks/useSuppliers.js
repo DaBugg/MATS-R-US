@@ -1,10 +1,15 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase, isSupabaseConfigured } from "../lib/supabaseClient";
 
 export function useSuppliers() {
   const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  // Per-instance channel suffix — see useLocations.js.
+  const channelIdRef = useRef(null);
+  if (channelIdRef.current === null) {
+    channelIdRef.current = crypto.randomUUID();
+  }
 
   const fetchSuppliers = useCallback(async () => {
     if (!isSupabaseConfigured) {
@@ -30,7 +35,7 @@ export function useSuppliers() {
     if (!isSupabaseConfigured) return;
 
     const channel = supabase
-      .channel("suppliers-realtime")
+      .channel(`suppliers-realtime-${channelIdRef.current}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "suppliers" },

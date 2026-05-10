@@ -1,4 +1,5 @@
 import FloorStatusBadge, { deriveFloorStatus } from "./FloorStatusBadge.jsx";
+import { getHeatBucket } from "../../lib/heatMap.js";
 
 function fmt(n) {
   if (!Number.isFinite(n)) return "0";
@@ -9,17 +10,23 @@ function fmt(n) {
 // A single readable floor row. Real <button> for accessibility, focus ring,
 // hover/selected state. Numbers and labels live OUTSIDE any background
 // graphic so nothing overlaps the building illustration.
+//
+// `heatLevel` is 0-4 — 0 paints the row white, 4 paints it deep orange.
+// Selected state uses an outer ring (not a background swap) so it stays
+// visible on already-tinted hot rows.
 export default function FloorRow({
   location,
   stats,
   criticalCount = 0,
   selected = false,
+  heatLevel = 0,
   onSelect,
 }) {
   const lineCount = stats?.lineCount ?? 0;
   const unitTotal = stats?.unitTotal ?? 0;
   const status = deriveFloorStatus({ lineCount, unitTotal, criticalCount });
   const tag = `L${location.sort_order ?? "?"}`;
+  const heat = getHeatBucket(heatLevel);
 
   return (
     <button
@@ -30,9 +37,12 @@ export default function FloorRow({
       className={[
         "group grid w-full grid-cols-[auto_1fr_auto] items-center gap-3 rounded-lg border px-3 py-2.5 text-left transition",
         "focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1",
+        heat.rowBg,
+        heat.rowBorder,
+        "hover:brightness-[0.96]",
         selected
-          ? "border-orange-300 bg-orange-50 shadow-sm"
-          : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50",
+          ? "ring-2 ring-orange-600 ring-offset-2 shadow-md"
+          : "",
       ].join(" ")}
     >
       <span
@@ -51,7 +61,7 @@ export default function FloorRow({
         <span className="block truncate text-sm font-semibold text-slate-900">
           {location.name}
         </span>
-        <span className="block truncate text-xs text-slate-500">
+        <span className="block truncate text-xs text-slate-700/80">
           {lineCount === 0
             ? "No materials logged"
             : `${fmt(lineCount)} ${lineCount === 1 ? "line" : "lines"} · ${fmt(unitTotal)} ${unitTotal === 1 ? "unit" : "units"}`}

@@ -1,4 +1,5 @@
 import FloorStatusBadge, { deriveFloorStatus } from "./FloorStatusBadge.jsx";
+import { getHeatBucket } from "../../lib/heatMap.js";
 
 function fmt(n) {
   if (!Number.isFinite(n)) return "0";
@@ -9,17 +10,22 @@ function fmt(n) {
 // Connex Box treated as a real location, not a floating overlay. Visual
 // glyph is contained inside a small thumbnail so the orange illustration
 // never bleeds across other content.
+//
+// Heat tint mirrors FloorRow — white when empty, deeper orange the more
+// material is parked here, normalized against the busiest location.
 export default function ConnexLocationCard({
   location,
   stats,
   criticalCount = 0,
   selected = false,
+  heatLevel = 0,
   onSelect,
 }) {
   if (!location) return null;
   const lineCount = stats?.lineCount ?? 0;
   const unitTotal = stats?.unitTotal ?? 0;
   const status = deriveFloorStatus({ lineCount, unitTotal, criticalCount });
+  const heat = getHeatBucket(heatLevel);
 
   return (
     <button
@@ -30,9 +36,10 @@ export default function ConnexLocationCard({
       className={[
         "group flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition",
         "focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1",
-        selected
-          ? "border-orange-400 bg-orange-50 shadow-sm"
-          : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50",
+        heat.rowBg,
+        heat.rowBorder,
+        "hover:brightness-[0.96]",
+        selected ? "ring-2 ring-orange-600 ring-offset-2 shadow-md" : "",
       ].join(" ")}
     >
       <ConnexThumb selected={selected} />
@@ -43,12 +50,12 @@ export default function ConnexLocationCard({
           </span>
           <FloorStatusBadge status={status} />
         </div>
-        <p className="mt-0.5 text-xs text-slate-500">
+        <p className="mt-0.5 text-xs text-slate-700/80">
           {lineCount === 0
             ? "Empty"
             : `${fmt(lineCount)} ${lineCount === 1 ? "line" : "lines"} · ${fmt(unitTotal)} ${unitTotal === 1 ? "unit" : "units"}`}
         </p>
-        <p className="mt-0.5 text-[11px] uppercase tracking-wide text-slate-400">
+        <p className="mt-0.5 text-[11px] uppercase tracking-wide text-slate-500">
           {location.type === "storage" ? "Site asset" : "Other location"}
         </p>
       </div>
@@ -62,7 +69,7 @@ function ConnexThumb({ selected }) {
     <span
       className={[
         "flex h-12 w-14 flex-shrink-0 items-center justify-center rounded-md",
-        selected ? "ring-2 ring-orange-400" : "",
+        selected ? "ring-2 ring-orange-600" : "",
       ]
         .filter(Boolean)
         .join(" ")}

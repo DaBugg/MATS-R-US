@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase, isSupabaseConfigured } from "../lib/supabaseClient";
 
 // Lightweight aggregation hook: returns a Map<location_id, { lineCount, unitTotal }>
@@ -8,6 +8,11 @@ export function useInventoryStats() {
   const [statsByLocation, setStatsByLocation] = useState(() => new Map());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  // Per-instance channel suffix — see useLocations.js.
+  const channelIdRef = useRef(null);
+  if (channelIdRef.current === null) {
+    channelIdRef.current = crypto.randomUUID();
+  }
 
   const fetchStats = useCallback(async () => {
     if (!isSupabaseConfigured) {
@@ -40,7 +45,7 @@ export function useInventoryStats() {
     if (!isSupabaseConfigured) return;
 
     const channel = supabase
-      .channel("inventory-stats-realtime")
+      .channel(`inventory-stats-realtime-${channelIdRef.current}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "inventory_items" },

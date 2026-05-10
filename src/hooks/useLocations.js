@@ -1,10 +1,16 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase, isSupabaseConfigured } from "../lib/supabaseClient";
 
 export function useLocations() {
   const [locations, setLocations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  // Per-instance channel suffix so two components calling useLocations() in
+  // the same render tree don't collide on Supabase's by-name channel cache.
+  const channelIdRef = useRef(null);
+  if (channelIdRef.current === null) {
+    channelIdRef.current = crypto.randomUUID();
+  }
 
   const fetchLocations = useCallback(async () => {
     if (!isSupabaseConfigured) {
@@ -30,7 +36,7 @@ export function useLocations() {
     if (!isSupabaseConfigured) return;
 
     const channel = supabase
-      .channel("locations-realtime")
+      .channel(`locations-realtime-${channelIdRef.current}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "locations" },

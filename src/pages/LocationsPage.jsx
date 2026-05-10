@@ -4,10 +4,12 @@ import LocationStatsBar from "../components/locations/LocationStatsBar.jsx";
 import NorthTowerCard from "../components/locations/NorthTowerCard.jsx";
 import ConnexLocationCard from "../components/locations/ConnexLocationCard.jsx";
 import LocationDetailPanel from "../components/locations/LocationDetailPanel.jsx";
+import HeatKey from "../components/locations/HeatKey.jsx";
 import { useLocations } from "../hooks/useLocations.js";
 import { useInventoryStats } from "../hooks/useInventoryStats.js";
 import { useAllInventory } from "../hooks/useAllInventory.js";
 import { getStatus, STATUS } from "../lib/inventoryStatus.js";
+import { computeHeatMaxes, getHeatLevel } from "../lib/heatMap.js";
 
 export default function LocationsPage() {
   const { activeLocations, loading: locLoading } = useLocations();
@@ -76,6 +78,13 @@ export default function LocationsPage() {
     return { lines, units };
   }, [statsByLocation]);
 
+  // Heat normalization — computed once per render across the WHOLE site so
+  // floor and connex cards share the same scale.
+  const heatMaxes = useMemo(
+    () => computeHeatMaxes(statsByLocation),
+    [statsByLocation],
+  );
+
   const connexCount = grouped.storage.length + grouped.other.length;
 
   return (
@@ -107,6 +116,14 @@ export default function LocationsPage() {
         />
       </div>
 
+      {/* Heat key — shown above the building so the floor tint is legible */}
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+          Material density
+        </p>
+        <HeatKey />
+      </div>
+
       {/* Main grid: tower + floors on left, detail panel on right (desktop). */}
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1.45fr)_minmax(360px,0.75fr)]">
         <div className="space-y-4">
@@ -115,6 +132,7 @@ export default function LocationsPage() {
             floors={grouped.floors}
             statsByLocation={statsByLocation}
             criticalByLocation={criticalByLocation}
+            heatMaxes={heatMaxes}
             selectedLocationId={selectedLocationId}
             onSelectLocation={setSelectedLocation}
           />
@@ -137,16 +155,20 @@ export default function LocationsPage() {
                 </h2>
               </header>
               <div className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-2 md:p-5">
-                {[...grouped.storage, ...grouped.other].map((loc) => (
-                  <ConnexLocationCard
-                    key={loc.id}
-                    location={loc}
-                    stats={statsByLocation.get(loc.id)}
-                    criticalCount={criticalByLocation.get(loc.id) ?? 0}
-                    selected={loc.id === selectedLocationId}
-                    onSelect={setSelectedLocation}
-                  />
-                ))}
+                {[...grouped.storage, ...grouped.other].map((loc) => {
+                  const stats = statsByLocation.get(loc.id);
+                  return (
+                    <ConnexLocationCard
+                      key={loc.id}
+                      location={loc}
+                      stats={stats}
+                      criticalCount={criticalByLocation.get(loc.id) ?? 0}
+                      heatLevel={getHeatLevel(stats, heatMaxes)}
+                      selected={loc.id === selectedLocationId}
+                      onSelect={setSelectedLocation}
+                    />
+                  );
+                })}
               </div>
             </section>
           )}
@@ -155,7 +177,10 @@ export default function LocationsPage() {
         {/* Desktop side panel */}
         <aside className="hidden xl:block">
           <div className="sticky top-20 max-h-[calc(100vh-6rem)] overflow-hidden rounded-2xl border border-[--color-site-border] bg-[--color-site-card] shadow-sm">
-            <LocationDetailPanel location={selectedLocation} />
+            <LocationDetailPanel
+              location={selectedLocation}
+              locations={activeLocations}
+            />
           </div>
         </aside>
       </div>
@@ -174,6 +199,7 @@ export default function LocationsPage() {
             <div className="max-h-[72vh] overflow-y-auto">
               <LocationDetailPanel
                 location={selectedLocation}
+                locations={activeLocations}
                 onClose={() => setSelectedLocation(null)}
               />
             </div>

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase, isSupabaseConfigured } from "../lib/supabaseClient";
 
 const SELECT_GRAPH = `
@@ -19,6 +19,11 @@ export function useAllInventory() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  // Per-instance channel suffix — see useLocations.js.
+  const channelIdRef = useRef(null);
+  if (channelIdRef.current === null) {
+    channelIdRef.current = crypto.randomUUID();
+  }
 
   const fetchItems = useCallback(async () => {
     if (!isSupabaseConfigured) {
@@ -42,7 +47,7 @@ export function useAllInventory() {
     fetchItems();
     if (!isSupabaseConfigured) return;
     const channel = supabase
-      .channel("all-inventory-realtime")
+      .channel(`all-inventory-realtime-${channelIdRef.current}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "inventory_items" },

@@ -1,14 +1,18 @@
 import TowerIllustration from "./TowerIllustration.jsx";
 import FloorRow from "./FloorRow.jsx";
+import { getHeatLevel } from "../../lib/heatMap.js";
 
 // North Tower card. Tower illustration is a small, decorative side panel —
 // it never has text rendered over it. The floor list is the operational
-// data, sitting in its own readable column.
+// data, sitting in its own readable column. `heatMaxes` is the global
+// normalization (computed once at the page) so each row's tint reflects
+// where it sits relative to the busiest location.
 export default function NorthTowerCard({
   buildingName = "North Tower",
   floors,
   statsByLocation,
   criticalByLocation,
+  heatMaxes,
   selectedLocationId,
   onSelectLocation,
 }) {
@@ -73,17 +77,21 @@ export default function NorthTowerCard({
             </p>
           ) : (
             <ol className="space-y-1.5">
-              {orderedTopDown.map((floor) => (
-                <li key={floor.id}>
-                  <FloorRow
-                    location={floor}
-                    stats={statsByLocation?.get(floor.id)}
-                    criticalCount={criticalByLocation?.get(floor.id) ?? 0}
-                    selected={floor.id === selectedLocationId}
-                    onSelect={onSelectLocation}
-                  />
-                </li>
-              ))}
+              {orderedTopDown.map((floor) => {
+                const stats = statsByLocation?.get(floor.id);
+                return (
+                  <li key={floor.id}>
+                    <FloorRow
+                      location={floor}
+                      stats={stats}
+                      criticalCount={criticalByLocation?.get(floor.id) ?? 0}
+                      heatLevel={getHeatLevel(stats, heatMaxes)}
+                      selected={floor.id === selectedLocationId}
+                      onSelect={onSelectLocation}
+                    />
+                  </li>
+                );
+              })}
             </ol>
           )}
         </div>
