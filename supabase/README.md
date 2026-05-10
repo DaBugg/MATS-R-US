@@ -8,14 +8,22 @@ Run these SQL files in order from the Supabase SQL editor (Project → SQL → N
 4. `sql/04_rls.sql` — enables RLS with public-CRUD policies (MVP-only, NOT production-secure)
 5. `sql/05_seed.sql` — seeds 21 floors + Connex Box, placeholder suppliers, sample materials
 
-### Optional one-shot test data
+### Optional one-shot data files
 
-Once the five files above have run, you can also run **one** of:
+Once the five files above have run, you can also run any of these:
 
 - `sql/06_set_active_floors_15.sql` — just deactivates Floors 16-21 (no inventory)
-- `sql/07_test_data.sql` — **recommended for testing**. Sets 15 active floors and
-  loads ~28 realistic plumbing inventory rows distributed across Floors 1-7 +
-  Connex Box, leaving Floors 8-15 empty. Idempotent — safe to re-run.
+- `sql/07_test_data.sql` — synthetic test data. Sets 15 active floors and loads
+  ~28 realistic plumbing inventory rows distributed across Floors 1-7 + Connex
+  Box, leaving Floors 8-15 empty. Idempotent.
+- `sql/08_ensure_connex.sql` — guarantees the Connex Box location exists and is
+  active. Idempotent.
+- `sql/09_pbau_seed.sql` — **the real plumbing dataset** built from the
+  `plumbing_inventory.xlsx` spreadsheet. Adds locations `PBAU`, `Deck`,
+  `Floor 12 ★`, sets Floors 3–18 active, and inserts 55 inventory rows from the
+  spreadsheet across 46 master materials and 3 suppliers (Charlotte, Sioux Chief,
+  Hold-Rite). Idempotent. Regenerate by re-running
+  `python3 scripts/build_pbau_seed.py` if the spreadsheet changes.
 
 ## After running
 
