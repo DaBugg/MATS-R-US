@@ -4,13 +4,9 @@ const ICON_BASE =
   "h-5 w-5 flex-shrink-0 text-slate-400 group-aria-[current=page]:text-blue-600";
 
 const NAV_ITEMS = [
-  { to: "/", label: "Dashboard", icon: <DashboardIcon /> , end: true },
-  { to: "/inventory", label: "Inventory", icon: <InventoryIcon /> },
   { to: "/locations", label: "Locations", icon: <LocationsIcon /> },
-  { to: "/add", label: "Add Material", icon: <AddIcon />, accent: true },
-  { to: "/counts", label: "Counts", icon: <CountsIcon />, soon: true },
-  { to: "/workers", label: "Workers", icon: <WorkersIcon />, soon: true },
-  { to: "/reports", label: "Reports", icon: <ReportsIcon />, soon: true },
+  { to: "/inventory", label: "Inventory", icon: <InventoryIcon /> },
+  { to: "/movements", label: "Movements", icon: <MovementsIcon />, soon: true },
   { to: "/settings", label: "Settings", icon: <SettingsIcon />, soon: true },
 ];
 
@@ -73,13 +69,12 @@ export default function SidebarNav({ onNavigate }) {
   );
 }
 
-function DashboardIcon() {
+function MovementsIcon() {
   return (
     <svg className={ICON_BASE} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true">
-      <rect x="3" y="3" width="7" height="9" rx="1" />
-      <rect x="14" y="3" width="7" height="5" rx="1" />
-      <rect x="14" y="12" width="7" height="9" rx="1" />
-      <rect x="3" y="16" width="7" height="5" rx="1" />
+      <path d="M5 12h14" strokeLinecap="round" />
+      <path d="M13 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M11 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" opacity="0.4" />
     </svg>
   );
 }
@@ -97,44 +92,6 @@ function LocationsIcon() {
     <svg className={ICON_BASE} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true">
       <path d="M4 21V8l8-5 8 5v13" />
       <path d="M9 21v-7h6v7" />
-    </svg>
-  );
-}
-
-function AddIcon() {
-  return (
-    <svg className={ICON_BASE} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true">
-      <circle cx="12" cy="12" r="9" />
-      <path d="M12 8v8M8 12h8" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function CountsIcon() {
-  return (
-    <svg className={ICON_BASE} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M9 11l3 3 8-8" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h7" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function WorkersIcon() {
-  return (
-    <svg className={ICON_BASE} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true">
-      <circle cx="9" cy="8" r="3" />
-      <circle cx="17" cy="9" r="2.5" />
-      <path d="M3 20c0-3 3-5 6-5s6 2 6 5" />
-      <path d="M14 20c0-2.5 2-4.5 5-4.5" />
-    </svg>
-  );
-}
-
-function ReportsIcon() {
-  return (
-    <svg className={ICON_BASE} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M5 3h11l4 4v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" />
-      <path d="M9 13l2 2 4-4" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }

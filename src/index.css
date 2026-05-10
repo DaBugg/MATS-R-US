@@ -6,6 +6,29 @@
   --color-brand-500: #3b82f6;
   --color-brand-600: #2563eb;
   --color-brand-700: #1d4ed8;
+
+  /* Site / construction-tone surface tokens (used selectively for the
+     Locations page so the building card and connex feel like field assets,
+     not a generic SaaS dashboard). */
+  --color-site-bg: #f6f4ef;
+  --color-site-fg: #252525;
+  --color-site-card: #ffffff;
+  --color-site-muted: #f0eee8;
+  --color-site-mutedfg: #6f6a62;
+  --color-site-border: #ddd7cc;
+
+  --color-accent-orange: #f68b5f;
+  --color-accent-orange-soft: #ffe2d3;
+
+  --color-status-empty: #d9d3c8;
+  --color-status-active: #4f8f6f;
+  --color-status-low: #d9a441;
+  --color-status-busy: #ef6f45;
+  --color-status-review: #7b61ff;
+
+  --radius-card: 1rem;
+
+  --shadow-card: 0 12px 32px rgba(32, 29, 24, 0.08);
 }
 
 html,
@@ -19,6 +42,7 @@ body {
     "Helvetica Neue", Arial, sans-serif;
 }
 
+/* Hide native number-input spinners for our quantity fields. */
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button {
   -webkit-appearance: none;
@@ -26,4 +50,15 @@ input[type="number"]::-webkit-inner-spin-button {
 }
 input[type="number"] {
   -moz-appearance: textfield;
+}
+
+/* Avoid the mobile bottom-action bar covering scroll content. Pages opt-in
+   by adding the .has-mobile-actions utility on their <main>. */
+.has-mobile-actions {
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 5rem);
+}
+@media (min-width: 768px) {
+  .has-mobile-actions {
+    padding-bottom: 1.5rem;
+  }
 }

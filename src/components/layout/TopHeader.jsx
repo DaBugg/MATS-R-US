@@ -1,13 +1,11 @@
 import { Link, useLocation } from "react-router-dom";
 
 const ROUTE_TITLES = {
-  "/": "Dashboard",
-  "/inventory": "Inventory",
+  "/": "Locations",
   "/locations": "Locations",
+  "/inventory": "Inventory",
   "/add": "Add Material",
-  "/counts": "Counts",
-  "/workers": "Workers",
-  "/reports": "Reports",
+  "/movements": "Movements",
   "/settings": "Settings",
 };
 

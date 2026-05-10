@@ -1,53 +1,28 @@
 import { Link } from "react-router-dom";
 
 const PAGES = {
-  counts: {
-    title: "Counts & Audits",
+  movements: {
+    title: "Movements",
     blurb:
-      "Run a count, log discrepancies, and verify what's really on each floor.",
+      "A full transaction log of every add, subtract, and material movement on the jobsite.",
     bullets: [
-      "Start a new count for any location",
-      "Field-team assignment + status (Not Started / In Progress / Complete)",
-      "Discrepancies vs. recorded inventory",
-      "Audit history with timestamps",
+      "Per-item history of quantity changes",
+      "Filter by location, material, or worker",
+      "Reasons captured for subtractions (installed, damaged, count correction…)",
+      "Requires the inventory_transactions table — see TODO_DATABASE_MIGRATION.md",
     ],
     cta: { to: "/inventory", label: "Browse current inventory →" },
   },
-  workers: {
-    title: "Workers & Assignments",
-    blurb:
-      "Track who's counting what, who moved which pallet, and what's still open.",
-    bullets: [
-      "Worker list with role (field, warehouse, supervisor)",
-      "Active assignments and recently completed tasks",
-      "Per-worker activity feed",
-      "Optional accounts/auth in v1.1",
-    ],
-    cta: { to: "/locations", label: "View jobsite locations →" },
-  },
-  reports: {
-    title: "Reports",
-    blurb:
-      "Export inventory and audit data, or run a quick low-stock summary.",
-    bullets: [
-      "CSV export of selected location or full site",
-      "Low-stock report with reorder suggestions",
-      "Audit history export",
-      "Movement log (when movement tracking ships)",
-    ],
-    cta: { to: "/inventory", label: "View inventory →" },
-  },
   settings: {
     title: "Settings",
-    blurb:
-      "Project preferences, integrations, and (eventually) auth.",
+    blurb: "Project preferences, integrations, and (eventually) auth.",
     bullets: [
       "Project / site name",
       "Default units and material categories",
       "Supabase connection status",
       "Roles & permissions when auth ships",
     ],
-    cta: { to: "/", label: "Back to dashboard →" },
+    cta: { to: "/locations", label: "Back to locations →" },
   },
 };
 
