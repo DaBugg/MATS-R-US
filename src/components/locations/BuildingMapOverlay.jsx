@@ -29,6 +29,7 @@ export default function BuildingMapOverlay({
   statsByLocation,
   heatMaxes,
   selectedLocationId,
+  onSelectLocation,
 }) {
   // Top-down: Floor 21 first (visually on top), Floor 1 last.
   const orderedTopDown = [...floors].sort(
