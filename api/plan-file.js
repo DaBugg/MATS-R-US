@@ -16,7 +16,7 @@ export default async function handler(request, response) {
     if (!rows.length) return reject(response, 404, "Plan not found.");
     const validUntil = Date.now() + 5 * 60 * 1000;
     const token = await issueSignedToken({ pathname: rows[0].blob_path, operations: ["get"], validUntil });
-    const { presignedUrl } = await presignUrl(token, { pathname: rows[0].blob_path, operation: "get", validUntil });
+    const { presignedUrl } = await presignUrl(token, { pathname: rows[0].blob_path, operation: "get", validUntil, access: "private" });
     response.setHeader("Cache-Control", "private, no-store");
     return response.status(200).json({ url: presignedUrl });
   } catch (error) {
