@@ -109,7 +109,7 @@ export default function LocationsPage() {
       {/* Stats row */}
       <div className="mb-5">
         <LocationStatsBar
-          activeFloors={grouped.floors.length}
+          activeFloors={grouped.floors.filter((floor) => /^Floor \d+$/.test(floor.name)).length}
           totalLines={totals.lines}
           totalUnits={totals.units}
           connexCount={connexCount}

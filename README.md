@@ -12,7 +12,9 @@ for 4 in. PVC 45s are combined into one 100-piece row. Run
 `supabase/sql/11_activate_pbau.sql` once on a Neon database that already has
 `01_schema.sql` and floor locations. The script archives existing demo records
 under `mats_archive`, installs unique constraints, and creates an atomic stock
-write function. Verify its counts before pointing Production at that database.
+write function. Then run `supabase/sql/12_expand_locations_to_25.sql` to show
+Floors 1–25, Deck, and Garage under storage. Verify counts before pointing
+Production at that database.
 
 ## Deployment
 
