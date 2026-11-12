@@ -37,3 +37,16 @@ Dot's token cannot create or delete stock rows, change a count directly, or
 modify the material and location catalogs. The server checks available
 quantity, performs each move in one database transaction, records an event,
 and rejects duplicate material/location rows.
+
+## Dot in ChatGPT, Codex, and iMessage
+
+The same Dot can receive a request in ChatGPT or iMessage and start a local
+Codex task on the connected Mac. For Mats stock changes, that task should use
+the repository's `AGENTS.md` and `scripts/dot_inventory.mjs` bridge. The key
+is stored only in the gitignored local `.env.local` with owner-only file
+permissions. The Mac must be connected to Dot and online for this path.
+
+Ask Dot to use the local Mats-R-Us Codex task for a proposed stock change,
+show you the exact material, quantity, and location, and wait for your
+approval before running the bridge's write command. If Dot is working only
+in its cloud computer, it must not ask you to paste the write key into chat.

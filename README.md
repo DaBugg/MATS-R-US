@@ -24,7 +24,8 @@ with a `VITE_` prefix. `DATABASE_URL` is used only by server functions.
 Anyone with the public URL can view stock without a Vercel login. A site editor
 enters the editor key on the first write; it remains in that tab's session.
 Dot receives only its narrow stock-change token and must request approval for
-each change. See [Dot inventory connection](docs/dot-inventory.md).
+each change. Local Codex tasks use the ignored `.env.local` bridge described in
+[Dot inventory connection](docs/dot-inventory.md).
 
 ## Development
 
