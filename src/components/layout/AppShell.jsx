@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import SidebarNav from "./SidebarNav.jsx";
 import TopHeader from "./TopHeader.jsx";
-import { isSupabaseConfigured } from "../../lib/supabaseClient.js";
 
 export default function AppShell() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -59,7 +58,7 @@ export default function AppShell() {
       {/* Main column */}
       <div className="flex min-h-screen flex-col md:pl-60">
         <TopHeader onOpenMenu={() => setMobileOpen(true)} />
-        {!isSupabaseConfigured && <SupabaseBanner />}
+        <DemoBanner />
         <main className="flex-1 px-4 py-5 md:px-6 md:py-6">
           <Outlet />
         </main>
@@ -68,15 +67,12 @@ export default function AppShell() {
   );
 }
 
-function SupabaseBanner() {
+function DemoBanner() {
   return (
-    <div className="border-b border-amber-200 bg-amber-50 text-amber-900">
-      <div className="px-4 py-3 text-sm md:px-6">
-        <strong className="font-semibold">Supabase is not configured.</strong>{" "}
-        Copy <code className="rounded bg-amber-100 px-1.5 py-0.5">.env.example</code> to{" "}
-        <code className="rounded bg-amber-100 px-1.5 py-0.5">.env.local</code>, paste your Supabase
-        URL and publishable key, then restart{" "}
-        <code className="rounded bg-amber-100 px-1.5 py-0.5">npm run dev</code>.
+    <div className="border-b border-blue-200 bg-blue-50 text-blue-950">
+      <div className="px-4 py-2 text-xs md:px-6">
+        <strong className="font-semibold">Demo inventory</strong>{" "}
+        Sample data loads from Neon Postgres. Changes are saved in this browser only.
       </div>
     </div>
   );
