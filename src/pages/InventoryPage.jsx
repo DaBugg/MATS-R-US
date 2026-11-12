@@ -45,7 +45,7 @@ function makeSearcher(q) {
 }
 
 export default function InventoryPage() {
-  const { items, loading, error } = useAllInventory();
+  const { items, loading, error, refresh } = useAllInventory();
   const { activeLocations } = useLocations();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -123,7 +123,9 @@ export default function InventoryPage() {
           <p className="mt-1 text-sm text-slate-500">
             {loading
               ? "Loading inventory…"
-              : `${filtered.length} of ${items.length} ${items.length === 1 ? "row" : "rows"} shown`}
+              : error
+                ? "Inventory is unavailable"
+                : `${filtered.length} of ${items.length} ${items.length === 1 ? "row" : "rows"} shown`}
             {filteredLocationName && (
               <>
                 <span className="mx-1.5 text-slate-300">·</span>
@@ -197,14 +199,22 @@ export default function InventoryPage() {
         </div>
       </div>
 
-      {error && (
-        <div className="mb-4 rounded-md border border-rose-200 bg-rose-50 p-3 text-sm text-rose-900">
-          Failed to load inventory: {error.message}
+      {!loading && error && (
+        <div role="alert" className="mb-4 rounded-md border border-rose-200 bg-rose-50 p-3 text-sm text-rose-900">
+          <p className="font-semibold">Inventory could not be loaded.</p>
+          <p className="mt-1">{error.message} Check your connection and try again. If this continues, contact the site owner.</p>
+          <button
+            type="button"
+            onClick={refresh}
+            className="mt-3 rounded-md border border-rose-300 px-3 py-1.5 font-medium hover:bg-rose-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-700"
+          >
+            Try again
+          </button>
         </div>
       )}
 
       {/* Empty state */}
-      {!loading && filtered.length === 0 && (
+      {!loading && !error && filtered.length === 0 && (
         <EmptyState
           title={
             items.length === 0
@@ -230,7 +240,7 @@ export default function InventoryPage() {
       )}
 
       {/* Desktop table */}
-      {filtered.length > 0 && (
+      {!error && filtered.length > 0 && (
         <div className="hidden overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm md:block">
           <div className="max-h-[70vh] overflow-x-auto">
             <table className="min-w-full text-sm">
@@ -313,7 +323,7 @@ export default function InventoryPage() {
       )}
 
       {/* Mobile cards */}
-      {filtered.length > 0 && (
+      {!error && filtered.length > 0 && (
         <ul className="space-y-2 md:hidden">
           {filtered.map((row) => (
             <li

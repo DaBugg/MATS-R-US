@@ -27,6 +27,7 @@ export function useAllInventory() {
 
   const fetchItems = useCallback(async () => {
     if (!isSupabaseConfigured) {
+      setError(new Error("Inventory service is not configured."));
       setLoading(false);
       return;
     }
@@ -42,6 +43,11 @@ export function useAllInventory() {
     }
     setLoading(false);
   }, []);
+
+  const refresh = useCallback(async () => {
+    setLoading(true);
+    await fetchItems();
+  }, [fetchItems]);
 
   useEffect(() => {
     fetchItems();
@@ -74,5 +80,5 @@ export function useAllInventory() {
     };
   }, [fetchItems]);
 
-  return { items, loading, error, refresh: fetchItems };
+  return { items, loading, error, refresh };
 }
