@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import LocationStatsBar from "../components/locations/LocationStatsBar.jsx";
 import BuildingMapOverlay from "../components/locations/BuildingMapOverlay.jsx";
@@ -13,9 +13,11 @@ import { getStatus, STATUS } from "../lib/inventoryStatus.js";
 import { computeHeatMaxes, getHeatLevel } from "../lib/heatMap.js";
 
 export default function LocationsPage() {
-  const { activeLocations, loading: locLoading } = useLocations();
+  const { activeLocations, archiveLocation, loading: locLoading } = useLocations();
   const { statsByLocation } = useInventoryStats();
-  const { items: allItems } = useAllInventory();
+  const { items: allItems, loading: inventoryLoading, error: inventoryError } = useAllInventory();
+  const [assetActionId, setAssetActionId] = useState(null);
+  const [assetMessage, setAssetMessage] = useState("");
 
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedLocationId = searchParams.get("location") ?? null;
@@ -56,6 +58,39 @@ export default function LocationsPage() {
     }
     return map;
   }, [allItems]);
+
+  const inventoryCountByLocation = useMemo(() => {
+    const counts = new Map();
+    for (const row of allItems) {
+      const locationId = row.location?.id ?? row.location_id;
+      if (locationId) counts.set(locationId, (counts.get(locationId) ?? 0) + 1);
+    }
+    return counts;
+  }, [allItems]);
+
+  async function removeSiteAsset(location) {
+    if (assetActionId) return;
+    if (inventoryLoading || inventoryError) {
+      setAssetMessage("Check the inventory connection before removing a site asset.");
+      return;
+    }
+    if ((inventoryCountByLocation.get(location.id) ?? 0) > 0) {
+      setAssetMessage(`Move the stock out of ${location.name} before removing it.`);
+      return;
+    }
+    if (!window.confirm(`Remove ${location.name} from Site Assets? You can restore it in Manage locations.`)) return;
+    setAssetActionId(location.id);
+    setAssetMessage("");
+    try {
+      await archiveLocation(location.id);
+      if (selectedLocationId === location.id) setSelectedLocation(null);
+      setAssetMessage(`${location.name} was removed from Site Assets. You can restore it in Manage locations.`);
+    } catch (error) {
+      setAssetMessage(error?.message ?? "Could not remove the site asset.");
+    } finally {
+      setAssetActionId(null);
+    }
+  }
 
   const grouped = useMemo(() => {
     const sorted = [...activeLocations].sort(
@@ -109,7 +144,7 @@ export default function LocationsPage() {
       {/* Stats row */}
       <div className="mb-5">
         <LocationStatsBar
-          activeFloors={grouped.floors.length}
+          activeFloors={grouped.floors.filter((floor) => /^Floor \d+$/.test(floor.name)).length}
           totalLines={totals.lines}
           totalUnits={totals.units}
           connexCount={connexCount}
@@ -153,6 +188,12 @@ export default function LocationsPage() {
         </aside>
       </div>
 
+      {assetMessage && (
+        <p role="status" className="mt-5 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+          {assetMessage}
+        </p>
+      )}
+
       {/* Site Assets — full-width row below */}
       {(grouped.storage.length > 0 || grouped.other.length > 0) && (
         <section
@@ -169,6 +210,9 @@ export default function LocationsPage() {
             >
               Connex & Other Locations
             </h2>
+            <p className="mt-1 text-xs text-slate-500">
+              Empty locations can be removed and restored from Manage locations.
+            </p>
           </header>
           <div className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-2 md:p-5 lg:grid-cols-3 xl:grid-cols-4">
             {[...grouped.storage, ...grouped.other].map((loc) => {
@@ -182,6 +226,12 @@ export default function LocationsPage() {
                   heatLevel={getHeatLevel(stats, heatMaxes)}
                   selected={loc.id === selectedLocationId}
                   onSelect={setSelectedLocation}
+                  onArchive={removeSiteAsset}
+                  inventoryCount={inventoryCountByLocation.get(loc.id) ?? 0}
+                  inventoryReady={!inventoryLoading && !inventoryError}
+                  inventoryUnavailable={Boolean(inventoryError)}
+                  busy={assetActionId === loc.id}
+                  actionPending={assetActionId !== null}
                 />
               );
             })}

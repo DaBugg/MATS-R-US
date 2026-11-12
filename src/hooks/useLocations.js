@@ -69,8 +69,8 @@ export function useLocations() {
   }, []);
 
   const archiveLocation = useCallback(
-    (id) => updateLocation(id, { is_active: false }),
-    [updateLocation],
+    (id) => sharedWrite("/api/catalog", { action: "archiveSiteAsset", id }),
+    [],
   );
 
   const restoreLocation = useCallback(

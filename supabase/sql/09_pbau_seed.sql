@@ -12,7 +12,7 @@
 insert into public.locations (name, type, sort_order, is_active)
 select v.name, v.type, v.sort_order, true
 from (values
-    ('Deck',       'floor',  22,  'roof / top working deck'),
+    ('Deck',       'floor',  26,  'roof / top working deck'),
     ('Floor 12 ★', 'other',  125, 'tech cart on floor 12'),
     ('PBAU',       'other',  200, 'project base / staging area')
 ) as v(name, type, sort_order, note)
@@ -20,17 +20,10 @@ where not exists (
     select 1 from public.locations l where l.name = v.name
 );
 
--- Activate every floor that appears in the spreadsheet (the building map
--- renders only active floors). Floors NOT in the spreadsheet are deactivated
--- so the visualization matches the dataset exactly.
+-- Activate floors in the spreadsheet without hiding newer site locations.
 update public.locations
 set is_active = true
 where type = 'floor' and name in ('Floor 3', 'Floor 4', 'Floor 5', 'Floor 6', 'Floor 7', 'Floor 8', 'Floor 9', 'Floor 10', 'Floor 11', 'Floor 12', 'Floor 13', 'Floor 14', 'Floor 15', 'Floor 16', 'Floor 17', 'Floor 18');
-
-update public.locations
-set is_active = false
-where type = 'floor' and name ~ '^Floor [0-9]+$'
-  and name not in ('Floor 3', 'Floor 4', 'Floor 5', 'Floor 6', 'Floor 7', 'Floor 8', 'Floor 9', 'Floor 10', 'Floor 11', 'Floor 12', 'Floor 13', 'Floor 14', 'Floor 15', 'Floor 16', 'Floor 17', 'Floor 18');
 
 -- 2. Suppliers from the spreadsheet (idempotent on unique name).
 insert into public.suppliers (name, is_active) values

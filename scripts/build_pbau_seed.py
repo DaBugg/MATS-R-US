@@ -6,7 +6,7 @@ Build a deterministic Supabase SQL seed file from
 Produces: supabase/sql/09_pbau_seed.sql
 
 The output is idempotent — safe to re-run. It:
-  1. Activates floors that appear in the spreadsheet (Floor 3..18 + Deck).
+  1. Activates floors that appear in the spreadsheet without hiding other floors.
   2. Adds new locations: 'Deck' (top floor), 'Floor 12 ★' (other), and 'PBAU' (other).
   3. Adds suppliers: Charlotte, Sioux Chief, Hold-Rite.
   4. Adds master materials derived from each (Size, Material, Part) tuple.
@@ -175,7 +175,7 @@ def main() -> None:
     out("insert into public.locations (name, type, sort_order, is_active)")
     out("select v.name, v.type, v.sort_order, true")
     out("from (values")
-    out("    ('Deck',       'floor',  22,  'roof / top working deck'),")
+    out("    ('Deck',       'floor',  26,  'roof / top working deck'),")
     out("    ('Floor 12 ★', 'other',  125, 'tech cart on floor 12'),")
     out("    ('PBAU',       'other',  200, 'project base / staging area')")
     out(") as v(name, type, sort_order, note)")
@@ -184,18 +184,12 @@ def main() -> None:
     out(");")
     out("")
 
-    out("-- Activate every floor that appears in the spreadsheet (the building map")
-    out("-- renders only active floors). Floors NOT in the spreadsheet are deactivated")
-    out("-- so the visualization matches the dataset exactly.")
+    out("-- Activate floors in the spreadsheet without hiding newer site locations.")
     floor_names = sorted(floors_in_data, key=lambda n: int(n.split()[1]))
     placeholder_floors = ", ".join(sql_quote(n) for n in floor_names)
     out("update public.locations")
     out("set is_active = true")
     out(f"where type = 'floor' and name in ({placeholder_floors});")
-    out("")
-    out("update public.locations")
-    out("set is_active = false")
-    out(f"where type = 'floor' and name not in ({placeholder_floors});")
     out("")
 
     # 2. Suppliers

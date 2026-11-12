@@ -31,10 +31,12 @@ export default function BuildingMapOverlay({
   selectedLocationId,
   onSelectLocation,
 }) {
-  // Top-down: Floor 21 first (visually on top), Floor 1 last.
+  // Top-down: Deck, then the highest numbered floor through Floor 1.
   const orderedTopDown = [...floors].sort(
     (a, b) => (b.sort_order ?? 0) - (a.sort_order ?? 0),
   );
+  const numberedFloorCount = floors.filter((floor) => /^Floor \d+$/.test(floor.name)).length;
+  const hasDeck = floors.some((floor) => floor.name === "Deck");
 
   const buildingHeight = Math.max(
     orderedTopDown.length * FLOOR_HEIGHT,
@@ -74,8 +76,9 @@ export default function BuildingMapOverlay({
           </h2>
           <p className="text-xs text-slate-500">
             <span className="font-semibold text-slate-700">
-              {orderedTopDown.length}{" "}
-              {orderedTopDown.length === 1 ? "floor" : "floors"}
+              {numberedFloorCount}{" "}
+              {numberedFloorCount === 1 ? "floor" : "floors"}
+              {hasDeck ? " + Deck" : ""}
             </span>
             <span className="mx-1.5 text-slate-300">·</span>
             {totals.lines} {totals.lines === 1 ? "line" : "lines"}
@@ -99,7 +102,7 @@ export default function BuildingMapOverlay({
             viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`}
             className="block h-auto w-full select-none"
             role="img"
-            aria-label={`${buildingName} elevation with ${orderedTopDown.length} floors. Click any floor to inspect.`}
+            aria-label={`${buildingName} elevation with ${numberedFloorCount} floors${hasDeck ? " and Deck" : ""}. Click any level to inspect.`}
           >
             <defs>
               <pattern
@@ -246,7 +249,7 @@ function FloorOverlayRow({ floor, y, stats, heatLevel, selected, onSelect }) {
   const stroke = HEAT_STROKE[heatLevel] ?? "#e2e8f0";
   const lineCount = stats?.lineCount ?? 0;
   const unitTotal = stats?.unitTotal ?? 0;
-  const tag = `L${floor.sort_order ?? "?"}`;
+  const tag = floor.name === "Deck" ? "DK" : `L${floor.sort_order ?? "?"}`;
   const ariaLabel = `${floor.name}: ${lineCount} ${lineCount === 1 ? "line" : "lines"}, ${unitTotal} ${unitTotal === 1 ? "unit" : "units"}${selected ? " (selected)" : ""}`;
 
   return (

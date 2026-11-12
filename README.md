@@ -12,7 +12,9 @@ for 4 in. PVC 45s are combined into one 100-piece row. Run
 `supabase/sql/11_activate_pbau.sql` once on a Neon database that already has
 `01_schema.sql` and floor locations. The script archives existing demo records
 under `mats_archive`, installs unique constraints, and creates an atomic stock
-write function. Verify its counts before pointing Production at that database.
+write function. Then run `supabase/sql/12_expand_locations_to_25.sql` to show
+Floors 1–25, Deck, and Garage under storage. Verify counts before pointing
+Production at that database.
 
 ## Deployment
 
@@ -26,6 +28,10 @@ enters the editor key on the first write; it remains in that tab's session.
 Dot receives only its narrow stock-change token and must request approval for
 each change. Local Codex tasks use the ignored `.env.local` bridge described in
 [Dot inventory connection](docs/dot-inventory.md).
+
+On the Locations page, empty Site Assets can be removed from view and restored
+later in Manage locations. Assets with inventory cannot be removed until their
+stock is moved or cleared.
 
 ## Development
 
