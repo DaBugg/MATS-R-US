@@ -19,7 +19,7 @@ const PAGES = {
     bullets: [
       "Project / site name",
       "Default units and material categories",
-      "Supabase connection status",
+      "Shared database status",
       "Roles & permissions when auth ships",
     ],
     cta: { to: "/locations", label: "Back to locations →" },
