@@ -58,7 +58,7 @@ export default function AppShell() {
       {/* Main column */}
       <div className="flex min-h-screen flex-col md:pl-60">
         <TopHeader onOpenMenu={() => setMobileOpen(true)} />
-        <DemoBanner />
+        <InventoryBanner />
         <main className="flex-1 px-4 py-5 md:px-6 md:py-6">
           <Outlet />
         </main>
@@ -67,12 +67,12 @@ export default function AppShell() {
   );
 }
 
-function DemoBanner() {
+function InventoryBanner() {
   return (
     <div className="border-b border-blue-200 bg-blue-50 text-blue-950">
       <div className="px-4 py-2 text-xs md:px-6">
-        <strong className="font-semibold">Demo inventory</strong>{" "}
-        Sample data loads from Neon Postgres. Changes are saved in this browser only.
+        <strong className="font-semibold">Shared inventory</strong>{" "}
+        Stock is saved to the PBAU database. Changes require an editor key.
       </div>
     </div>
   );

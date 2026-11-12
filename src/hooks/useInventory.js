@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase, isSupabaseConfigured } from "../lib/supabaseClient";
+import { stockChange } from "./useInventoryActions.js";
 
 const SELECT_GRAPH = `
   id,
@@ -82,43 +83,23 @@ export function useInventory(locationId) {
   const addInventoryItem = useCallback(
     async ({ material_id, quantity, unit, supplier_id, notes }) => {
       if (!locationId) throw new Error("No location selected.");
-      const { data, error: insertError } = await supabase
-        .from("inventory_items")
-        .insert([
-          {
-            material_id,
-            location_id: locationId,
-            quantity,
-            unit: unit || null,
-            supplier_id: supplier_id || null,
-            notes: notes || null,
-          },
-        ])
-        .select(SELECT_GRAPH)
-        .single();
-      if (insertError) throw insertError;
-      return data;
+      return stockChange("create", {
+        materialId: material_id, locationId, amount: Number(quantity),
+        unit: unit || null, supplierId: supplier_id || null, notes: notes || null,
+      });
     },
     [locationId],
   );
 
   const updateInventoryItem = useCallback(async (id, patch) => {
-    const { data, error: updateError } = await supabase
-      .from("inventory_items")
-      .update(patch)
-      .eq("id", id)
-      .select(SELECT_GRAPH)
-      .single();
-    if (updateError) throw updateError;
-    return data;
+    return stockChange("set", {
+      rowId: id, amount: Number(patch.quantity), notes: patch.notes ?? null,
+      unit: patch.unit ?? null, supplierId: patch.supplier_id ?? null,
+    });
   }, []);
 
   const deleteInventoryItem = useCallback(async (id) => {
-    const { error: deleteError } = await supabase
-      .from("inventory_items")
-      .delete()
-      .eq("id", id);
-    if (deleteError) throw deleteError;
+    await stockChange("delete", { rowId: id });
   }, []);
 
   return {

@@ -1,38 +1,49 @@
-// Read the Neon SQL snapshot once. Demo edits stay in this browser.
-const STORAGE_KEY = "mats-r-us-neon-demo-v1";
+// Shared Neon reads; all writes go through protected server endpoints.
 const TABLES = new Set(["locations", "suppliers", "materials", "inventory_items"]);
 const listeners = new Set();
 let statePromise;
+let fetchedAt = 0;
+let pollTimer;
 
-async function getState() {
+async function getState(force = false) {
+  if (force || Date.now() - fetchedAt > 3000) statePromise = undefined;
   if (!statePromise) {
-    statePromise = (async () => {
-      const response = await fetch("/api/bootstrap", { cache: "no-store" });
+    statePromise = fetch("/api/bootstrap", { cache: "no-store" }).then(async (response) => {
       if (!response.ok) throw new Error("Inventory service is unavailable. Try again shortly.");
-      const seed = await response.json();
-      if (![...TABLES].every((table) => Array.isArray(seed[table]))) {
-        throw new Error("Inventory service returned incomplete data.");
-      }
-      try {
-        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
-        if ([...TABLES].every((table) => Array.isArray(saved?.[table]))) return saved;
-      } catch {
-        // A corrupt or unavailable browser store should not hide the SQL seed.
-      }
-      return seed;
-    })().catch((error) => {
-      statePromise = undefined; // Let the visible retry button reconnect.
-      throw error;
-    });
+      const state = await response.json();
+      if (![...TABLES].every((table) => Array.isArray(state[table]))) throw new Error("Inventory service returned incomplete data.");
+      fetchedAt = Date.now();
+      return state;
+    }).catch((error) => { statePromise = undefined; throw error; });
   }
   return statePromise;
 }
 
-function save(state, table) {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch { /* Storage can be disabled. */ }
-  queueMicrotask(() => {
-    for (const listener of listeners) if (listener.table === table) listener.callback();
+function changed() {
+  statePromise = undefined;
+  fetchedAt = 0;
+  queueMicrotask(() => listeners.forEach(({ callback }) => callback()));
+}
+
+export async function sharedWrite(path, payload) {
+  let key = sessionStorage.getItem("mats-editor-key");
+  if (!key) {
+    key = window.prompt("Enter the Mats-R-Us editor key to save changes:")?.trim();
+    if (!key) throw new Error("An editor key is required to change inventory.");
+    sessionStorage.setItem("mats-editor-key", key);
+  }
+  const response = await fetch(path, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: "Bearer " + key },
+    body: JSON.stringify(payload),
   });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    if (response.status === 401 || response.status === 403) sessionStorage.removeItem("mats-editor-key");
+    throw new Error(result.error || "Save failed (" + response.status + ").");
+  }
+  changed();
+  return result;
 }
 
 function enrich(row, state) {
@@ -46,24 +57,8 @@ function enrich(row, state) {
 }
 
 class Query {
-  constructor(table) {
-    this.table = table;
-    this.operation = "select";
-    this.filters = [];
-    this.sort = null;
-    this.max = null;
-    this.returning = false;
-    this.head = false;
-  }
-
-  select(_columns = "*", options = {}) {
-    this.returning = true;
-    this.head = Boolean(options.head);
-    return this;
-  }
-  insert(rows) { this.operation = "insert"; this.payload = rows; return this; }
-  update(patch) { this.operation = "update"; this.payload = patch; return this; }
-  delete() { this.operation = "delete"; return this; }
+  constructor(table) { this.table = table; this.filters = []; this.sort = null; this.max = null; this.head = false; }
+  select(_columns = "*", options = {}) { this.head = Boolean(options.head); return this; }
   eq(column, value) { this.filters.push((row) => String(row[column]) === String(value)); return this; }
   ilike(column, value) { this.filters.push((row) => String(row[column] ?? "").toLowerCase() === String(value).toLowerCase()); return this; }
   order(column, { ascending = true } = {}) { this.sort = { column, ascending }; return this; }
@@ -71,52 +66,28 @@ class Query {
   single() { return this.run("single"); }
   maybeSingle() { return this.run("maybeSingle"); }
   then(resolve, reject) { return this.run().then(resolve, reject); }
-
   async run(mode = "many") {
     try {
       if (!TABLES.has(this.table)) throw new Error("Unknown data table.");
       const state = await getState();
       let rows = state[this.table].filter((row) => this.filters.every((filter) => filter(row)));
-      if (this.operation === "select") {
-        if (this.sort) {
-          const { column, ascending } = this.sort;
-          rows = [...rows].sort((a, b) => {
-            const first = a[column] ?? "";
-            const second = b[column] ?? "";
-            const comparison = typeof first === "number" && typeof second === "number"
-              ? first - second : String(first).localeCompare(String(second));
-            return ascending ? comparison : -comparison;
-          });
-        }
-        if (this.head) return { data: null, count: rows.length, error: null };
-        if (this.max !== null) rows = rows.slice(0, this.max);
-      } else if (this.operation === "insert") {
-        const now = new Date().toISOString();
-        rows = (Array.isArray(this.payload) ? this.payload : [this.payload]).map((row) => ({
-          id: crypto.randomUUID(), created_at: now, updated_at: now, is_active: true, ...row,
-        }));
-        state[this.table].push(...rows);
-        save(state, this.table);
-      } else {
-        if (this.filters.length === 0) throw new Error("A row filter is required for this action.");
-        if (this.operation === "update") {
-          const now = new Date().toISOString();
-          rows.forEach((row) => Object.assign(row, this.payload, { updated_at: now }));
-          save(state, this.table);
-        } else if (this.operation === "delete") {
-          state[this.table] = state[this.table].filter((row) => !rows.includes(row));
-          save(state, this.table);
-        }
+      if (this.sort) {
+        const { column, ascending } = this.sort;
+        rows = [...rows].sort((a, b) => {
+          const first = a[column] ?? ""; const second = b[column] ?? "";
+          const comparison = typeof first === "number" && typeof second === "number"
+            ? first - second : String(first).localeCompare(String(second));
+          return ascending ? comparison : -comparison;
+        });
       }
+      const count = rows.length;
+      if (this.head) return { data: null, count, error: null };
+      if (this.max !== null) rows = rows.slice(0, this.max);
       if (mode === "single" && rows.length !== 1) throw new Error("Expected one matching row.");
       if (mode === "maybeSingle" && rows.length > 1) throw new Error("Expected at most one matching row.");
-      const data = !this.returning && this.operation !== "select" ? null
-        : mode === "single" || mode === "maybeSingle" ? enrich(rows[0] ?? null, state)
-          : rows.map((row) => enrich(row, state));
-      return { data: data === null ? null : structuredClone(data), error: null };
-    } catch (error) {
-      return { data: null, count: null, error };
-    }
+      const data = mode === "single" || mode === "maybeSingle" ? enrich(rows[0] ?? null, state) : rows.map((row) => enrich(row, state));
+      return { data: data === null ? null : structuredClone(data), count, error: null };
+    } catch (error) { return { data: null, count: null, error }; }
   }
 }
 
@@ -127,8 +98,18 @@ export const supabase = {
     const subscriptions = [];
     return {
       on(_event, { table }, callback) { subscriptions.push({ table, callback }); return this; },
-      subscribe() { subscriptions.forEach((item) => listeners.add(item)); return this; },
-      unsubscribe() { subscriptions.forEach((item) => listeners.delete(item)); },
+      subscribe() {
+        subscriptions.forEach((item) => listeners.add(item));
+        if (!pollTimer) pollTimer = setInterval(async () => {
+          if (document.hidden) return;
+          try { await getState(true); listeners.forEach(({ callback }) => callback()); } catch { /* Views show retry errors. */ }
+        }, 10000);
+        return this;
+      },
+      unsubscribe() {
+        subscriptions.forEach((item) => listeners.delete(item));
+        if (!listeners.size && pollTimer) { clearInterval(pollTimer); pollTimer = undefined; }
+      },
     };
   },
   removeChannel(channel) { channel.unsubscribe(); },
