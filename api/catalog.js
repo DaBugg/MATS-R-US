@@ -33,6 +33,19 @@ export default async function handler(request, response) {
       rows = await sql`update public.locations set name = ${name.trim()}, type = ${type},
         sort_order = ${sort_order}, is_active = ${is_active}, updated_at = now()
         where id = ${id}::uuid returning *`;
+    } else if (action === "archiveSiteAsset") {
+      if (!id) return reject(response, 400, "Missing site asset.");
+      rows = await sql`update public.locations
+        set is_active = false, updated_at = now()
+        where id = ${id}::uuid
+          and type in ('storage', 'other')
+          and is_active = true
+          and not exists (
+            select 1 from public.inventory_items
+            where location_id = ${id}::uuid
+          )
+        returning *`;
+      if (!rows.length) return reject(response, 409, "This site asset has inventory or is already removed.");
     } else if (action === "deleteLocation") {
       if (!id) return reject(response, 400, "Missing location.");
       rows = await sql`delete from public.locations where id = ${id}::uuid returning *`;
