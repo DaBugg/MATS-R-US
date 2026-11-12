@@ -20,6 +20,12 @@ export default function ConnexLocationCard({
   selected = false,
   heatLevel = 0,
   onSelect,
+  onArchive,
+  inventoryCount = 0,
+  inventoryReady = false,
+  inventoryUnavailable = false,
+  busy = false,
+  actionPending = false,
 }) {
   if (!location) return null;
   const lineCount = stats?.lineCount ?? 0;
@@ -28,38 +34,58 @@ export default function ConnexLocationCard({
   const heat = getHeatBucket(heatLevel);
 
   return (
-    <button
-      type="button"
-      onClick={() => onSelect?.(location.id)}
-      aria-pressed={selected}
-      aria-label={`${location.name}: ${lineCount} lines, ${unitTotal} units${selected ? " (selected)" : ""}`}
+    <div
       className={[
-        "group flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition",
-        "focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1",
+        "overflow-hidden rounded-xl border transition",
         heat.rowBg,
         heat.rowBorder,
-        "hover:brightness-[0.96]",
         selected ? "ring-2 ring-orange-600 ring-offset-2 shadow-md" : "",
       ].join(" ")}
     >
-      <ConnexThumb selected={selected} />
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center justify-between gap-2">
-          <span className="block truncate text-sm font-semibold text-slate-900">
-            {location.name}
-          </span>
-          <FloorStatusBadge status={status} />
+      <button
+        type="button"
+        onClick={() => onSelect?.(location.id)}
+        aria-pressed={selected}
+        aria-label={`${location.name}: ${lineCount} lines, ${unitTotal} units${selected ? " (selected)" : ""}`}
+        className="group flex w-full items-center gap-3 px-3 py-3 text-left hover:brightness-[0.96] focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-inset"
+      >
+        <ConnexThumb selected={selected} />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center justify-between gap-2">
+            <span className="block truncate text-sm font-semibold text-slate-900">
+              {location.name}
+            </span>
+            <FloorStatusBadge status={status} />
+          </div>
+          <p className="mt-0.5 text-xs text-slate-700/80">
+            {lineCount === 0
+              ? "Empty"
+              : `${fmt(lineCount)} ${lineCount === 1 ? "line" : "lines"} · ${fmt(unitTotal)} ${unitTotal === 1 ? "unit" : "units"}`}
+          </p>
+          <p className="mt-0.5 text-[11px] uppercase tracking-wide text-slate-500">
+            {location.type === "storage" ? "Site asset" : "Other location"}
+          </p>
         </div>
-        <p className="mt-0.5 text-xs text-slate-700/80">
-          {lineCount === 0
-            ? "Empty"
-            : `${fmt(lineCount)} ${lineCount === 1 ? "line" : "lines"} · ${fmt(unitTotal)} ${unitTotal === 1 ? "unit" : "units"}`}
-        </p>
-        <p className="mt-0.5 text-[11px] uppercase tracking-wide text-slate-500">
-          {location.type === "storage" ? "Site asset" : "Other location"}
-        </p>
+      </button>
+      <div className="flex min-h-9 items-center justify-between gap-2 border-t border-slate-200/70 px-3 py-1.5">
+        <span className="text-[11px] text-slate-500">
+          {!inventoryReady
+            ? inventoryUnavailable ? "Stock unavailable" : "Checking stock before removal"
+            : inventoryCount > 0
+              ? "Move stock before removing"
+              : "Can be restored later"}
+        </span>
+        <button
+          type="button"
+          onClick={() => onArchive?.(location)}
+          disabled={!inventoryReady || inventoryCount > 0 || actionPending}
+          aria-label={`Remove ${location.name} from Site Assets`}
+          className="rounded-md px-2 py-1 text-xs font-medium text-rose-700 hover:bg-rose-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 disabled:cursor-not-allowed disabled:text-slate-400 disabled:hover:bg-transparent"
+        >
+          {busy ? "Removing…" : "Remove"}
+        </button>
       </div>
-    </button>
+    </div>
   );
 }
 

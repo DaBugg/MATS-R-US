@@ -29,6 +29,10 @@ Dot receives only its narrow stock-change token and must request approval for
 each change. Local Codex tasks use the ignored `.env.local` bridge described in
 [Dot inventory connection](docs/dot-inventory.md).
 
+On the Locations page, empty Site Assets can be removed from view and restored
+later in Manage locations. Assets with inventory cannot be removed until their
+stock is moved or cleared.
+
 ## Development
 
 ```bash

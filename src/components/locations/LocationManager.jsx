@@ -11,7 +11,7 @@ const TYPE_OPTIONS = [
 // useLocations hook — same realtime channel keeps every other component in
 // sync the moment the row is committed.
 export default function LocationManager() {
-  const { addLocation, locations } = useLocations();
+  const { addLocation, restoreLocation, locations } = useLocations();
   const [open, setOpen] = useState(false);
   const [type, setType] = useState("floor");
   const [name, setName] = useState("");
@@ -19,6 +19,15 @@ export default function LocationManager() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+  const [restoringId, setRestoringId] = useState(null);
+  const [restoreMessage, setRestoreMessage] = useState("");
+
+  const removedSiteAssets = useMemo(
+    () => (locations ?? [])
+      .filter((location) => !location.is_active && ["storage", "other"].includes(location.type))
+      .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)),
+    [locations],
+  );
 
   const nextSuggestedSort = useMemo(() => {
     const same = (locations ?? []).filter((l) => l.type === type);
@@ -60,6 +69,19 @@ export default function LocationManager() {
     }
   }
 
+  async function handleRestore(location) {
+    setRestoringId(location.id);
+    setRestoreMessage("");
+    try {
+      await restoreLocation(location.id);
+      setRestoreMessage(`Restored "${location.name}".`);
+    } catch (err) {
+      setRestoreMessage(err?.message ?? "Could not restore this location.");
+    } finally {
+      setRestoringId(null);
+    }
+  }
+
   return (
     <section
       aria-labelledby="location-manager-heading"
@@ -79,7 +101,7 @@ export default function LocationManager() {
             id="location-manager-heading"
             className="text-base font-semibold text-slate-900"
           >
-            Add Floor or Storage
+            Manage locations
           </h3>
         </div>
         <svg
@@ -166,6 +188,34 @@ export default function LocationManager() {
             {submitting ? "Adding…" : "Add Location"}
           </button>
         </form>
+      )}
+      {removedSiteAssets.length > 0 && (
+        <div className="border-t border-slate-100 px-4 py-3">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+            Removed Site Assets
+          </p>
+          {restoreMessage && (
+            <p role="status" className="mt-2 text-xs text-slate-700">
+              {restoreMessage}
+            </p>
+          )}
+          <ul className="mt-2 space-y-2">
+            {removedSiteAssets.map((location) => (
+              <li key={location.id} className="flex items-center justify-between gap-2 text-sm">
+                <span className="min-w-0 truncate text-slate-700">{location.name}</span>
+                <button
+                  type="button"
+                  onClick={() => handleRestore(location)}
+                  disabled={restoringId !== null}
+                  aria-label={`Restore ${location.name} to Site Assets`}
+                  className="rounded-md border border-slate-300 px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-50"
+                >
+                  {restoringId === location.id ? "Restoring…" : "Restore"}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
     </section>
   );
