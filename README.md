@@ -37,3 +37,27 @@ npm run dev
 The Vite frontend needs a Vercel-compatible server to use `/api/*` locally.
 `npm run build` validates the frontend bundle. The database schema and import
 scripts are under `supabase/sql/`.
+
+## Drawing takeoff MVP
+
+The Drawings screen accepts private PDF uploads up to 50 MB. In a takeoff,
+PDF.js reads embedded text; scanned sheets can be processed with browser OCR.
+The extracted text is stored per page as evidence. A reviewer marks materials
+on the plan, matches each confirmed item to an existing catalog material, and
+approves the takeoff. Order Sheets totals approved quantities and compares
+them with live Neon stock, then exports shortages as CSV. Drawings and takeoffs
+do not change inventory balances.
+
+Before enabling these routes on Vercel:
+
+1. Run `supabase/sql/13_plan_takeoff.sql` against the existing Neon database.
+2. Connect a **private** Vercel Blob store to the project and configure
+   `BLOB_READ_WRITE_TOKEN` for client upload tokens. Keep `DATABASE_URL` and
+   `EDITOR_WRITE_TOKEN` configured as before.
+3. Deploy the code, then verify upload, OCR, review, approval, and CSV export
+   with a representative contractor PDF.
+
+The current editor key protects all plan and takeoff API reads and writes.
+Before customer drawings are exposed to multiple organizations, replace that
+shared key with user and project permissions. The MVP has no reservations or
+purchase order receipts, and drawing revisions must be checked for duplicates.

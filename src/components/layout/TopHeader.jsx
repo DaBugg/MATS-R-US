@@ -7,11 +7,14 @@ const ROUTE_TITLES = {
   "/add": "Add Material",
   "/movements": "Movements",
   "/settings": "Settings",
+  "/drawings": "Drawings",
+  "/requirements": "Order Sheets",
+  "/orders": "Order Sheets",
 };
 
-export default function TopHeader({ onOpenMenu, projectName = "North Tower" }) {
+export default function TopHeader({ onOpenMenu, projectName = "PBAU Construction" }) {
   const { pathname } = useLocation();
-  const title = ROUTE_TITLES[pathname] ?? "SNL Inventory";
+  const title = pathname.startsWith("/takeoffs/") ? "Material Takeoff" : ROUTE_TITLES[pathname] ?? "SNL Inventory";
 
   return (
     <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur">
