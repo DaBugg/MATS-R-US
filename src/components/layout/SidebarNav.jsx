@@ -63,7 +63,7 @@ export default function SidebarNav({ onNavigate }) {
 
       <div className="mt-auto px-3 py-3 text-[11px] text-slate-400">
         <p>v0.1 MVP</p>
-        <p>Realtime · Supabase</p>
+        <p>Shared · Neon Postgres</p>
       </div>
     </nav>
   );

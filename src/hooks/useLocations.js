@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase, isSupabaseConfigured } from "../lib/supabaseClient";
+import { sharedWrite } from "../lib/demoClient.js";
 
 export function useLocations() {
   const [locations, setLocations] = useState([]);
@@ -55,24 +56,16 @@ export function useLocations() {
   );
 
   const addLocation = useCallback(async ({ name, type, sort_order }) => {
-    const { data, error: insertError } = await supabase
-      .from("locations")
-      .insert([{ name, type, sort_order, is_active: true }])
-      .select()
-      .single();
-    if (insertError) throw insertError;
-    return data;
+    return sharedWrite("/api/catalog", { action: "addLocation", name, type, sort_order: Number(sort_order) });
   }, []);
 
   const updateLocation = useCallback(async (id, patch) => {
-    const { data, error: updateError } = await supabase
-      .from("locations")
-      .update(patch)
-      .eq("id", id)
-      .select()
-      .single();
-    if (updateError) throw updateError;
-    return data;
+    const { data: current, error } = await supabase.from("locations").select("*").eq("id", id).single();
+    if (error) throw error;
+    return sharedWrite("/api/catalog", {
+      action: "updateLocation", id, ...current, ...patch,
+      sort_order: Number(patch.sort_order ?? current.sort_order),
+    });
   }, []);
 
   const archiveLocation = useCallback(
@@ -96,11 +89,7 @@ export function useLocations() {
     if ((count ?? 0) > 0) {
       return { ok: false, reason: "has_inventory" };
     }
-    const { error: deleteError } = await supabase
-      .from("locations")
-      .delete()
-      .eq("id", id);
-    if (deleteError) throw deleteError;
+    await sharedWrite("/api/catalog", { action: "deleteLocation", id });
     return { ok: true };
   }, []);
 

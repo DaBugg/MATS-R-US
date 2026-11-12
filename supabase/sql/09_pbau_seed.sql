@@ -29,7 +29,8 @@ where type = 'floor' and name in ('Floor 3', 'Floor 4', 'Floor 5', 'Floor 6', 'F
 
 update public.locations
 set is_active = false
-where type = 'floor' and name not in ('Floor 3', 'Floor 4', 'Floor 5', 'Floor 6', 'Floor 7', 'Floor 8', 'Floor 9', 'Floor 10', 'Floor 11', 'Floor 12', 'Floor 13', 'Floor 14', 'Floor 15', 'Floor 16', 'Floor 17', 'Floor 18');
+where type = 'floor' and name ~ '^Floor [0-9]+$'
+  and name not in ('Floor 3', 'Floor 4', 'Floor 5', 'Floor 6', 'Floor 7', 'Floor 8', 'Floor 9', 'Floor 10', 'Floor 11', 'Floor 12', 'Floor 13', 'Floor 14', 'Floor 15', 'Floor 16', 'Floor 17', 'Floor 18');
 
 -- 2. Suppliers from the spreadsheet (idempotent on unique name).
 insert into public.suppliers (name, is_active) values
@@ -159,10 +160,10 @@ insert into public.inventory_items
 select
     m.id,
     l.id,
-    d.quantity,
-    d.unit,
-    s.id,
-    d.notes
+    sum(d.quantity),
+    max(d.unit),
+    min(s.id::text)::uuid,
+    string_agg(distinct d.notes, E'\n') filter (where d.notes is not null)
 from inv_data d
 join public.materials  m on m.name = d.material_name
 join public.locations  l on l.name = d.location_name
@@ -170,7 +171,8 @@ left join public.suppliers s on s.name = d.supplier_name
 where not exists (
     select 1 from public.inventory_items i
     where i.material_id = m.id and i.location_id = l.id
-);
+)
+group by m.id, l.id;
 
 -- =========================================================================
 -- Verify (uncomment to inspect):

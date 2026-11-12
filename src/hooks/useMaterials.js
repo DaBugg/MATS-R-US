@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase, isSupabaseConfigured } from "../lib/supabaseClient";
+import { sharedWrite } from "../lib/demoClient.js";
 
 export function useMaterials() {
   const [materials, setMaterials] = useState([]);
@@ -55,28 +56,10 @@ export function useMaterials() {
       const trimmed = (name ?? "").trim();
       if (!trimmed) throw new Error("Material name is required.");
 
-      const { data: existing, error: findError } = await supabase
-        .from("materials")
-        .select("id, name, default_unit, supplier_id, is_active")
-        .ilike("name", trimmed)
-        .limit(1)
-        .maybeSingle();
-      if (findError) throw findError;
-      if (existing) return existing;
-
-      const { data: inserted, error: insertError } = await supabase
-        .from("materials")
-        .insert([
-          {
-            name: trimmed,
-            default_unit: default_unit || null,
-            supplier_id: supplier_id || null,
-          },
-        ])
-        .select()
-        .single();
-      if (insertError) throw insertError;
-      return inserted;
+      return sharedWrite("/api/catalog", {
+        action: "findOrCreateMaterial", name: trimmed,
+        default_unit: default_unit || null, supplier_id: supplier_id || null,
+      });
     },
     [],
   );

@@ -1,114 +1,39 @@
-# MATS-R-US — SNL Inventory MVP
+# MATS-R-US — Shared PBAU inventory
 
-A simple, database-driven construction-site inventory tracker.
+Mats-R-Us shows construction-site materials by location. The public site reads
+from a shared Neon Postgres database. Writes from the site and Dot use protected
+server endpoints, so stock changes appear across browsers.
 
-> **One question, fast answer:** *What material do we have, and where is it?*
+## Official stock
 
-The job site has up to 21 floors plus a Connex storage box. This app shows what
-material is on each floor (or in the Connex), supports inline editing, location-
-specific search, and live multi-window updates via Supabase Realtime.
+The repository PBAU seed is the official starting snapshot. It contains 55
+source lines and 54 unique material/location rows: two 50-piece Deck entries
+for 4 in. PVC 45s are combined into one 100-piece row. Run
+`supabase/sql/11_activate_pbau.sql` once on a Neon database that already has
+`01_schema.sql` and floor locations. The script archives existing demo records
+under `mats_archive`, installs unique constraints, and creates an atomic stock
+write function. Verify its counts before pointing Production at that database.
 
-## Tech stack
+## Deployment
 
-- **React 19** + **Vite 8**
-- **Tailwind CSS v4** (`@tailwindcss/vite`)
-- **Supabase** (Postgres + Realtime)
-- Deploy target: **Vercel**
+Vercel needs three server-only sensitive environment variables in Production
+and Preview: `DATABASE_URL`, `EDITOR_WRITE_TOKEN`, and `DOT_WRITE_TOKEN`.
+Use separate random write tokens of at least 32 characters. Never expose them
+with a `VITE_` prefix. `DATABASE_URL` is used only by server functions.
 
-## Project layout
+Anyone with the public URL can view stock without a Vercel login. A site editor
+enters the editor key on the first write; it remains in that tab's session.
+Dot receives only its narrow stock-change token and must request approval for
+each change. Local Codex tasks use the ignored `.env.local` bridge described in
+[Dot inventory connection](docs/dot-inventory.md).
 
-```text
-.
-├── index.html
-├── vite.config.js
-├── package.json
-├── .env.example                ← copy to .env.local with your Supabase keys
-├── supabase/
-│   ├── README.md               ← how to run the SQL files
-│   └── sql/
-│       ├── 01_schema.sql
-│       ├── 02_triggers.sql
-│       ├── 03_realtime.sql
-│       ├── 04_rls.sql
-│       └── 05_seed.sql
-└── src/
-    ├── main.jsx
-    ├── App.jsx
-    ├── index.css
-    ├── lib/
-    │   └── supabaseClient.js
-    ├── hooks/
-    │   ├── useLocations.js
-    │   ├── useInventory.js
-    │   ├── useMaterials.js
-    │   └── useSuppliers.js
-    └── components/
-        ├── BuildingMap.jsx
-        ├── InventoryPanel.jsx
-        ├── InventoryRow.jsx
-        ├── AddInventoryRow.jsx
-        └── SearchInput.jsx
-```
-
-## Data model (4 tables)
-
-| Table             | Purpose                                                |
-| ----------------- | ------------------------------------------------------ |
-| `locations`       | Floors + storage areas (Connex Box). Database-driven.  |
-| `suppliers`       | Supplier master list.                                   |
-| `materials`       | Master material list (one row per distinct material).  |
-| `inventory_items` | Quantity of a material at a specific location.         |
-
-The same material can live in many locations — that's why `inventory_items`
-joins `materials` × `locations` rather than duplicating material names.
-
-## Getting started
-
-### 1. Create the Supabase backend
-
-Open your Supabase project's SQL editor and run, in order:
-
-1. `supabase/sql/01_schema.sql`
-2. `supabase/sql/02_triggers.sql`
-3. `supabase/sql/03_realtime.sql`
-4. `supabase/sql/04_rls.sql`
-5. `supabase/sql/05_seed.sql`
-
-See [`supabase/README.md`](./supabase/README.md) for details.
-
-### 2. Configure environment
-
-```bash
-cp .env.example .env.local
-# then edit .env.local and paste your Supabase URL + anon key
-```
-
-### 3. Install + run
+## Development
 
 ```bash
 npm install
 npm run dev
 ```
 
-Open <http://localhost:5173>.
-
-## What's included in this MVP
-
-- Database-driven floor / Connex visualization (no hard-coded floor list)
-- Inventory CRUD (add, inline edit, delete) per location
-- Location-specific search (search runs only inside the selected location)
-- Decimal quantities; units; supplier dropdown
-- Master materials list with create-or-select on add
-- Supabase Realtime — changes appear instantly across browser windows
-
-## What's intentionally NOT in this MVP
-
-Auth, role permissions, multiple sites/projects, low-stock alerts, movement logs,
-worker carts, photo uploads, CSV exports, PO automation, barcode/QR scanning,
-mobile-first design, offline mode. See section 5.2 of the build plan.
-
-## Security warning
-
-The MVP RLS policies allow **public** read/write through the anon key. This is
-fine for private testing only. **Do not share the production URL** until proper
-auth and policies are added.
+The Vite frontend needs a Vercel-compatible server to use `/api/*` locally.
+`npm run build` validates the frontend bundle. The database schema and import
+scripts are under `supabase/sql/`.
