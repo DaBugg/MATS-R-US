@@ -8,6 +8,9 @@ const newItem = () => ({ id: null, clientId: crypto.randomUUID(), materialId: ""
 export default function TakeoffPage() {
   const { id } = useParams();
   const canvasRef = useRef(null);
+  const viewportRef = useRef(null);
+  const [planWidth,setPlanWidth]=useState(600);
+  const [zoom,setZoom]=useState(1);
   const [drawing, setDrawing] = useState(null);
   const [pages, setPages] = useState([]);
   const [pdf, setPdf] = useState(null);
@@ -42,6 +45,12 @@ export default function TakeoffPage() {
   }, [id]);
 
   useEffect(() => {
+    const observer = new ResizeObserver(([entry]) => setPlanWidth(entry.contentRect.width));
+    if (viewportRef.current) observer.observe(viewportRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
     if (!pdf || !canvasRef.current) return;
     let active = true;
     let renderTask;
@@ -49,12 +58,14 @@ export default function TakeoffPage() {
       try {
         const page = await pdf.getPage(pageNumber);
         if (!active || !canvasRef.current) return;
-        await renderPage(page, canvasRef.current, 1.3, (task) => { renderTask = task; });
+        const natural = page.getViewport({scale:1});
+        const scale = Math.min((planWidth-24)/natural.width*zoom,6000/Math.max(natural.width,natural.height));
+        await renderPage(page, canvasRef.current, Math.max(.1,scale), (task) => { renderTask = task; });
         if (active && canvasRef.current) setCanvasSize({ width: canvasRef.current.width, height: canvasRef.current.height });
       } catch (e) { if (active) setError(`Could not render page: ${e.message}`); }
     })();
     return () => { active = false; renderTask?.cancel(); };
-  }, [pdf, pageNumber]);
+  }, [pdf, pageNumber, planWidth, zoom]);
 
   async function extract(all = false, forceOcr = false) {
     if (!pdf) return;
@@ -139,7 +150,8 @@ export default function TakeoffPage() {
             <div className="flex items-center gap-2"><button disabled={pageNumber <= 1} onClick={() => setPageNumber((n) => n - 1)} className="rounded border px-2 py-1 disabled:opacity-40">←</button><span className="text-sm font-medium">Page {pageNumber} of {drawing?.page_count || 1}</span><button disabled={pageNumber >= (drawing?.page_count || 1)} onClick={() => setPageNumber((n) => n + 1)} className="rounded border px-2 py-1 disabled:opacity-40">→</button></div>
             <div className="flex flex-wrap gap-2"><button disabled={!!busy || !pdf} onClick={() => extract(false, false)} className="rounded-lg border border-blue-200 px-3 py-1.5 text-xs font-semibold text-blue-700 disabled:opacity-50">Extract this page</button><button disabled={!!busy || !pdf} onClick={() => extract(false, true)} className="rounded-lg border px-3 py-1.5 text-xs font-semibold disabled:opacity-50">Run OCR</button><button disabled={!!busy || !pdf} onClick={() => extract(true, false)} className="rounded-lg border px-3 py-1.5 text-xs font-semibold disabled:opacity-50">Extract remaining</button></div>
           </div>
-          <div className="max-h-[75vh] overflow-auto bg-slate-200 p-3">
+          <div className="flex items-center gap-2 border-b p-2 text-xs"><button onClick={()=>setZoom(z=>Math.max(1,z-1))} disabled={zoom===1} aria-label="Zoom out" className="rounded border px-3 py-1 disabled:opacity-40">−</button><button onClick={()=>setZoom(1)} className="rounded border px-3 py-1">Fit width</button><button onClick={()=>setZoom(z=>Math.min(4,z+1))} disabled={zoom===4} aria-label="Zoom in" className="rounded border px-3 py-1 disabled:opacity-40">+</button><span>{zoom}×</span></div>
+          <div ref={viewportRef} className="max-h-[75vh] overflow-auto bg-slate-200 p-3">
             <div className="relative mx-auto shadow-lg" style={{ width: canvasSize.width || "fit-content", height: canvasSize.height || "auto" }}>
               <canvas key={pageNumber} ref={canvasRef} className="block bg-white" />
               <button type="button" onClick={selectPoint} className="absolute inset-0 w-full cursor-crosshair" aria-label="Select material location on plan" />

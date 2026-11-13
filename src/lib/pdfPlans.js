@@ -4,7 +4,9 @@ import workerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
 
 export async function openPdf(bytes) {
-  return pdfjs.getDocument({ data: bytes }).promise;
+  const task = pdfjs.getDocument({ data: bytes });
+  const pdf = await task.promise;
+  return { numPages: pdf.numPages, getPage: pdf.getPage.bind(pdf), destroy: () => task.destroy() };
 }
 
 export async function renderPage(page, canvas, scale = 1.3, onTask) {

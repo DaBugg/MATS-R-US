@@ -67,3 +67,9 @@ The current editor key protects all plan and takeoff API reads and writes.
 Before customer drawings are exposed to multiple organizations, replace that
 shared key with user and project permissions. The MVP has no reservations or
 purchase order receipts, and drawing revisions must be checked for duplicates.
+
+## Purchase order tracking
+
+Apply `supabase/sql/14_purchase_orders.sql` to the existing Neon database before enabling PO writes. Order Sheets can save shortage quantities as a draft PO, mark it ordered, log partial deliveries with retry-safe receipt IDs, show overdue orders and delivery history, and deduct outstanding ordered quantities from new recommendations. Drafts and cancelled orders do not reduce recommendations. PO quantities are a saved snapshot; cancel and recreate a draft to revise its lines. POs with deliveries cannot be cancelled.
+
+Delivery logging never updates inventory. Reconcile deliveries with approved stock updates before ordering again. Run `npm run test:purchasing` for isolated Postgres validation. See `docs/verification-2026-11-13.md` for real-PDF scanner evidence and remaining deployment gates.

@@ -3,14 +3,16 @@
   "private": true,
   "version": "0.0.1",
   "type": "module",
-  "description": "SNL Inventory MVP — construction-site material tracking",
+  "description": "SNL Inventory MVP \u2014 construction-site material tracking",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test:purchasing": "node tests/purchasing.mjs"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.16",
     "@tailwindcss/vite": "^4.3.0",
     "@vitejs/plugin-react": "^6.0.1",
     "tailwindcss": "^4.3.0",

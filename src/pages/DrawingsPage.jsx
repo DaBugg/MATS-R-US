@@ -23,9 +23,10 @@ export default function DrawingsPage() {
     if (!file || busy) return;
     setBusy(true);
     setError("");
+    let pdf;
     try {
       setProgress("Reading PDF…");
-      const pdf = await openPdf(new Uint8Array(await file.arrayBuffer()));
+      pdf = await openPdf(new Uint8Array(await file.arrayBuffer()));
       if (pdf.numPages > 200) throw new Error("Plans are limited to 200 pages.");
       setProgress("Uploading privately…");
       const blob = await uploadPlan(file, ({ percentage }) => setProgress(`Uploading ${Math.round(percentage)}%…`));
@@ -37,9 +38,8 @@ export default function DrawingsPage() {
       setName("");
       event.target.reset();
       setProgress("Plan saved. Open it to extract text and mark materials.");
-      await pdf.destroy();
     } catch (e) { setError(e.message); setProgress(""); }
-    finally { setBusy(false); }
+    finally { await pdf?.destroy(); setBusy(false); }
   }
 
   return (
