@@ -6,6 +6,8 @@ const ICON_BASE =
 const NAV_ITEMS = [
   { to: "/locations", label: "Locations", icon: <LocationsIcon /> },
   { to: "/inventory", label: "Inventory", icon: <InventoryIcon /> },
+  { to: "/drawings", label: "Drawings", icon: <DrawingsIcon /> },
+  { to: "/requirements", label: "Order Sheets", icon: <OrdersIcon /> },
   { to: "/movements", label: "Movements", icon: <MovementsIcon />, soon: true },
   { to: "/settings", label: "Settings", icon: <SettingsIcon />, soon: true },
 ];
@@ -62,7 +64,7 @@ export default function SidebarNav({ onNavigate }) {
       </ul>
 
       <div className="mt-auto px-3 py-3 text-[11px] text-slate-400">
-        <p>v0.1 MVP</p>
+        <p>v0.2 MVP</p>
         <p>Shared · Neon Postgres</p>
       </div>
     </nav>
@@ -85,6 +87,14 @@ function InventoryIcon() {
       <path d="M3 7h18M3 12h18M3 17h18" strokeLinecap="round" />
     </svg>
   );
+}
+
+function DrawingsIcon() {
+  return <svg className={ICON_BASE} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6zM14 3v5h5M9 12h7M9 16h7" strokeLinecap="round" strokeLinejoin="round" /></svg>;
+}
+
+function OrdersIcon() {
+  return <svg className={ICON_BASE} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14v17l-3-2-4 2-4-2-3 2zM9 9h6M9 13h6" strokeLinecap="round" strokeLinejoin="round" /></svg>;
 }
 
 function LocationsIcon() {
